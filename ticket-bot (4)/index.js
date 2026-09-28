@@ -46,6 +46,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } else if (interaction.isModalSubmit() && interaction.customId.startsWith("ticket_modal:")) {
       return await ticketSystem.handleModal(interaction);
     } else if (interaction.isButton()) {
+      const owner = client.commands.find(
+        (c) => c.buttonPrefix && interaction.customId.startsWith(c.buttonPrefix)
+      );
+      if (owner) return await owner.handleButton(interaction);
+
       if (interaction.customId === "ticket_claim") return await ticketSystem.handleClaim(interaction);
       if (interaction.customId === "ticket_unclaim") return await ticketSystem.handleUnclaim(interaction);
       if (interaction.customId === "ticket_close") return await ticketSystem.handleClose(interaction);
