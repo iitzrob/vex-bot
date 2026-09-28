@@ -187,10 +187,15 @@ async function sendPanel(interaction) {
     return interaction.reply(eph("You need the Manage Server permission to send the panel."));
   }
 
+  const fields = Object.values(config.categories).map((c) => ({
+    name: c.label,
+    value: c.description,
+    inline: false,
+  }));
+
   const embed = new EmbedBuilder()
     .setColor(config.embedColor)
-    .setTitle(config.panel.title)
-    .setDescription(config.panel.description)
+    .addFields(fields)
     .setFooter({
       text: interaction.guild.name,
       iconURL: interaction.guild.iconURL({ size: 128 }) || undefined,
