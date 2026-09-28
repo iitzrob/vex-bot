@@ -36,8 +36,9 @@ const save = () => fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2))
 // ---------------------------------------------------------------------------
 const eph = (content) => ({ content, flags: MessageFlags.Ephemeral });
 
-const isStaff = (member) =>
+const isStaff = (member, typeKey) =>
   member.roles.cache.has(config.staffRole) ||
+  member.roles.cache.has(config.categories[typeKey]?.pingRole) ||
   member.permissions.has(PermissionFlagsBits.Administrator);
 
 const cleanName = (s) =>
@@ -51,18 +52,17 @@ const cleanName = (s) =>
 const simpleEmbed = (description) =>
   new EmbedBuilder().setColor(config.embedColor).setDescription(description);
 
-function panelRow() {
+function panelRow(panelKey = "main") {
+  const keys = config.panels[panelKey].categories;
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId("ticket_select")
+      .setCustomId(`ticket_select:${panelKey}`)
       .setPlaceholder("Select a ticket category")
       .addOptions(
-        Object.entries(config.categories).map(([key, c]) => ({
-          label: c.label,
-          description: c.description,
-          value: key,
-          emoji: c.emoji,
-        }))
+        keys.map((key) => {
+          const c = config.categories[key];
+          return { label: c.label, description: c.description, value: key, emoji: c.emoji };
+        })
       )
   );
 }
@@ -187,9 +187,12 @@ async function sendPanel(interaction) {
     return interaction.reply(eph("You need the Manage Server permission to send the panel."));
   }
 
-  const fields = Object.values(config.categories).map((c) => ({
-    name: c.label,
-    value: c.description,
+  const panelKey = interaction.options.getString("type") || "main";
+  const panel = config.panels[panelKey];
+
+  const fields = panel.categories.map((key) => ({
+    name: config.categories[key].label,
+    value: config.categories[key].description,
     inline: false,
   }));
 
@@ -200,8 +203,10 @@ async function sendPanel(interaction) {
       text: interaction.guild.name,
       iconURL: interaction.guild.iconURL({ size: 128 }) || undefined,
     });
+  if (panel.title) embed.setTitle(panel.title);
+  if (panel.description) embed.setDescription(panel.description);
 
-  await interaction.channel.send({ embeds: [embed], components: [panelRow()] });
+  await interaction.channel.send({ embeds: [embed], components: [panelRow(panelKey)] });
   await interaction.reply(eph("Panel sent."));
 }
 
@@ -234,7 +239,8 @@ async function handleSelect(interaction) {
   await interaction.showModal(modal);
 
   // Reset the dropdown so the same option can be picked again.
-  interaction.message.edit({ components: [panelRow()] }).catch(() => {});
+  const panelKey = interaction.customId.split(":")[1] || "main";
+  interaction.message.edit({ components: [panelRow(panelKey)] }).catch(() => {});
 }
 
 async function handleModal(interaction) {
@@ -298,6 +304,21 @@ async function handleModal(interaction) {
           PermissionFlagsBits.ManageMessages,
         ],
       },
+      ...(cat.pingRole && cat.pingRole !== config.staffRole
+        ? [
+            {
+              id: cat.pingRole,
+              allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.ManageMessages,
+              ],
+            },
+          ]
+        : []),
       {
         id: interaction.client.user.id,
         allow: [
@@ -332,11 +353,13 @@ async function handleModal(interaction) {
         answers.map((a) => `**${a.label}**\n${a.value.slice(0, 1000)}`).join("\n\n")
     );
 
+  const pingRole = cat.pingRole || config.staffRole;
+
   await channel.send({
-    content: `<@${user.id}> <@&${config.staffRole}>`,
+    content: `<@${user.id}> <@&${pingRole}>`,
     embeds: [embed],
     components: [ticketRow(null)],
-    allowedMentions: { users: [user.id], roles: [config.staffRole] },
+    allowedMentions: { users: [user.id], roles: [pingRole] },
   });
 
   await interaction.editReply(`Your ticket has been created: <#${channel.id}>`);
@@ -348,7 +371,7 @@ async function handleModal(interaction) {
 async function handleClaim(interaction) {
   const ticket = tickets[interaction.channelId];
   if (!ticket) return interaction.reply(eph("This is not a ticket channel."));
-  if (!isStaff(interaction.member)) return interaction.reply(eph("Only staff can claim tickets."));
+  if (!isStaff(interaction.member, ticket.type)) return interaction.reply(eph("Only staff can claim tickets."));
   if (ticket.claimedBy) return interaction.reply(eph("This ticket has already been claimed."));
 
   ticket.claimedBy = interaction.user.id;
@@ -371,7 +394,7 @@ async function handleClaim(interaction) {
 async function handleUnclaim(interaction) {
   const ticket = tickets[interaction.channelId];
   if (!ticket) return interaction.reply(eph("This is not a ticket channel."));
-  if (!isStaff(interaction.member)) return interaction.reply(eph("Only staff can unclaim tickets."));
+  if (!isStaff(interaction.member, ticket.type)) return interaction.reply(eph("Only staff can unclaim tickets."));
   if (!ticket.claimedBy) return interaction.reply(eph("This ticket is not claimed."));
 
   const canUnclaim =
@@ -408,7 +431,7 @@ async function handleClose(interaction) {
   const ticket = tickets[channel.id];
   if (!ticket) return interaction.reply(eph("This is not a ticket channel."));
 
-  const allowed = isStaff(interaction.member) || interaction.user.id === ticket.owner;
+  const allowed = isStaff(interaction.member, ticket.type) || interaction.user.id === ticket.owner;
   if (!allowed) return interaction.reply(eph("Only staff or the ticket owner can close this ticket."));
 
   await interaction.reply({
@@ -448,7 +471,7 @@ async function handleClose(interaction) {
 async function handleRename(interaction) {
   const ticket = tickets[interaction.channelId];
   if (!ticket) return interaction.reply(eph("This is not a ticket channel."));
-  if (!isStaff(interaction.member)) return interaction.reply(eph("Only staff can rename tickets."));
+  if (!isStaff(interaction.member, ticket.type)) return interaction.reply(eph("Only staff can rename tickets."));
 
   const newName = cleanName(interaction.options.getString("name", true));
   const oldName = interaction.channel.name;
