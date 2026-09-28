@@ -183,8 +183,8 @@ ${rows}
 // Panel
 // ---------------------------------------------------------------------------
 async function sendPanel(interaction) {
-  if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
-    return interaction.reply(eph("You need the Manage Server permission to send the panel."));
+  if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
+    return interaction.reply(eph("Only admins can send the ticket panel."));
   }
 
   const panelKey = interaction.options.getString("type") || "main";
