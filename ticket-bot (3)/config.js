@@ -1,0 +1,112 @@
+require("dotenv").config();
+
+module.exports = {
+  token: process.env.BOT_TOKEN,
+  clientId: process.env.CLIENT_ID,
+  guildId: process.env.GUILD_ID,
+
+  staffRole: "1553279197995077681",
+  logChannel: "1553279200566452250",
+
+  embedColor: 0x2b2d31,
+
+  // "channel" is the category the ticket channels get created in.
+  categories: {
+    support: {
+      label: "Support",
+      description: "General questions and issues",
+      emoji: "🛠️",
+      prefix: "support",
+      channel: "1553279201203716183",
+      questions: [
+        {
+          id: "help",
+          label: "What can we help you with?",
+          style: "paragraph",
+          required: true,
+          placeholder: "Describe your issue or question",
+          maxLength: 1000,
+        },
+      ],
+    },
+
+    giveaway: {
+      label: "Giveaway Claim / Sponsor",
+      description: "Claim a prize or sponsor a giveaway",
+      emoji: "🎁",
+      prefix: "giveaway",
+      channel: "1553279201203716180",
+      requireOne: true, // at least one of the two fields must be filled in
+      questions: [
+        {
+          id: "won",
+          label: "How much did you win?",
+          style: "short",
+          required: false,
+          placeholder: "If you won",
+          maxLength: 100,
+        },
+        {
+          id: "sponsor",
+          label: "How much do you want to sponsor?",
+          style: "short",
+          required: false,
+          placeholder: "If you want to sponsor",
+          maxLength: 100,
+        },
+      ],
+    },
+
+    spawner: {
+      label: "Spawner Buy / Sell",
+      description: "Buy or sell spawners",
+      emoji: "💰",
+      prefix: "spawner",
+      channel: "1553279201057046604",
+      questions: [
+        {
+          id: "amount",
+          label: "How much do you want to buy/sell?",
+          style: "short",
+          required: true,
+          placeholder: "Example: 64",
+          maxLength: 100,
+        },
+      ],
+    },
+
+    partnership: {
+      label: "Partnership",
+      description: "Apply for a partnership with us",
+      emoji: "🤝",
+      prefix: "partner",
+      channel: "1553279201392468052",
+      questions: [
+        {
+          id: "members",
+          label: "How many members does your server have?",
+          style: "short",
+          required: true,
+          placeholder: "Example: 1500",
+          maxLength: 50,
+        },
+        {
+          id: "reqs",
+          label: "Do you agree with our requirements?",
+          style: "short",
+          required: true,
+          placeholder: "Yes / No",
+          maxLength: 50,
+        },
+      ],
+    },
+  },
+
+  panel: {
+    title: "Support Center",
+    description:
+      "Need assistance? Select a category from the menu below to open a ticket. " +
+      "A member of our staff team will be with you as soon as possible.",
+    footer: "Please do not open multiple tickets for the same issue.",
+  },
+};
