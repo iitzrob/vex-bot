@@ -101,9 +101,4 @@ module.exports = {
       ],
     },
   },
-
-  panel: {
-    title: "Tickets",
-    description: "Select a category below to open a ticket. Our staff team will assist you as soon as possible.",
-  },
 };
