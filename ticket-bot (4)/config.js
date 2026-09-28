@@ -7,6 +7,18 @@ module.exports = {
 
   staffRole: "1553279197995077681",
   logChannel: "1553279200566452250",
+  welcomeChannel: "1553279198477680721",
+
+  // Reaction role panel: /reactionroles
+  reactionRoles: {
+    title: "Notification Roles",
+    description: "React below to get the roles you want. Remove your reaction to take the role off.",
+    roles: [
+      { emoji: "🎁", label: "Giveaway Ping", roleId: "1553279197974102062" },
+      { emoji: "💰", label: "Spawner Ping", roleId: "1553279197974102063" },
+      { emoji: "🤝", label: "Partner Ping", roleId: "1553279197974102064" },
+    ],
+  },
 
   embedColor: 0x2b2d31,
 
