@@ -9,6 +9,10 @@ module.exports = {
   logChannel: "1553279200566452250",
   welcomeChannel: "1553279198477680721",
 
+  // Voice channel that shows the member count ({count} is replaced with the number)
+  memberCountChannel: "1553279198477680723",
+  memberCountName: "『🌍』members: {count}",
+
   // Reaction role panel: /reactionroles
   reactionRoles: {
     title: "Notification Roles",
