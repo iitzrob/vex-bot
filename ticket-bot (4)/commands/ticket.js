@@ -7,7 +7,18 @@ module.exports = {
     .setDescription("Ticket commands")
     .setDMPermission(false)
     .addSubcommand((s) =>
-      s.setName("panel").setDescription("Send the ticket panel to this channel")
+      s
+        .setName("panel")
+        .setDescription("Send a ticket panel to this channel")
+        .addStringOption((o) =>
+          o
+            .setName("type")
+            .setDescription("Which panel to send (default: tickets)")
+            .addChoices(
+              { name: "Tickets", value: "main" },
+              { name: "Builds and Dig Outs", value: "build" }
+            )
+        )
     )
     .addSubcommand((s) =>
       s.setName("close").setDescription("Close this ticket")
