@@ -4,6 +4,7 @@ const {
   Client,
   Collection,
   GatewayIntentBits,
+  Partials,
   MessageFlags,
   Events,
 } = require("discord.js");
@@ -15,7 +16,10 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent, // needed so transcripts contain message text
+    GatewayIntentBits.GuildMembers, // needed for the welcome message
+    GatewayIntentBits.GuildMessageReactions, // needed for reaction roles
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 // ---------------------------------------------------------------------------
@@ -31,6 +35,20 @@ for (const file of fs.readdirSync(commandsDir).filter((f) => f.endsWith(".js")))
     continue;
   }
   client.commands.set(command.data.name, command);
+}
+
+// ---------------------------------------------------------------------------
+// Load events from ./events
+// ---------------------------------------------------------------------------
+const eventsDir = path.join(__dirname, "events");
+if (fs.existsSync(eventsDir)) {
+  for (const file of fs.readdirSync(eventsDir).filter((f) => f.endsWith(".js"))) {
+    for (const ev of [].concat(require(path.join(eventsDir, file)))) {
+      client[ev.once ? "once" : "on"](ev.name, (...args) =>
+        Promise.resolve(ev.execute(...args)).catch((err) => console.error(`Event ${ev.name} error:`, err))
+      );
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
