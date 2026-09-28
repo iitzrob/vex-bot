@@ -41,7 +41,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (command) return await command.execute(interaction);
-    } else if (interaction.isStringSelectMenu() && interaction.customId === "ticket_select") {
+    } else if (interaction.isStringSelectMenu() && interaction.customId.startsWith("ticket_select")) {
       return await ticketSystem.handleSelect(interaction);
     } else if (interaction.isModalSubmit() && interaction.customId.startsWith("ticket_modal:")) {
       return await ticketSystem.handleModal(interaction);
